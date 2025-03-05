@@ -1,0 +1,13 @@
+### GET request to example server
+POST http://localhost:8081/orders
+
+{
+	"user_id" : 1,
+	"event_id" : 1
+}
+
+###
+GET http://localhost:8081/orders/2
+
+###
+GET http://localhost:8081/orders/
