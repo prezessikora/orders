@@ -1,7 +1,8 @@
 package main
 
 import (
-	"com.sikora/payments/service"
+	"com.sikora/orders/service"
+	"com.sikora/orders/storage/memory"
 	"fmt"
 )
 import "github.com/gin-gonic/gin"
@@ -11,9 +12,18 @@ import "github.com/gin-gonic/gin"
 
 func main() {
 	fmt.Printf("Orders_Manager!")
-	server := gin.Default()
-	service.RegisterRoutes(server)
 
-	server.Run(":8081")
+	//db, err := gorm.Open(sqlite.Open("orders.db"), &gorm.Config{})
+
+	server := gin.Default()
+
+	ordersService := service.NewOrdersService(memory.NewDataStore())
+	ordersService.RegisterRoutes(server)
+
+	err := server.Run(":8081")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 }
