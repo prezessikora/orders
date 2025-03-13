@@ -2,7 +2,6 @@ package service
 
 import (
 	"com.sikora/orders/model"
-
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -44,7 +43,7 @@ func (service OrdersService) createOrder(ctx *gin.Context) {
 // returns all paid model for which ticket can be created
 func (service OrdersService) getAllPaidOrders(context *gin.Context) {
 	all := service.storage.GetAll()
-	context.JSONP(http.StatusOK, gin.H{"model": all})
+	context.JSONP(http.StatusOK, gin.H{"orders": all})
 }
 
 // check order status for user dashboard
