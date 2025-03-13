@@ -1,9 +1,9 @@
 package sql
 
 import (
-	"com.sikora/orders/model"
 	"errors"
 	"fmt"
+	"github.com/prezessikora/orders/model"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

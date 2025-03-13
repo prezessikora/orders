@@ -1,8 +1,8 @@
 package memory
 
 import (
-	"com.sikora/orders/model"
 	"errors"
+	"github.com/prezessikora/orders/model"
 	"time"
 )
 

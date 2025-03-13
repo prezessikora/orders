@@ -1,9 +1,9 @@
 package service
 
 import (
-	"com.sikora/orders/model"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/prezessikora/orders/model"
 	"net/http"
 	"strconv"
 )
@@ -17,7 +17,7 @@ func NewOrdersService(storage OrderDataStorage) *OrdersService {
 	return &OrdersService{storage: storage}
 }
 
-// Data store inteerface for various storages, interface on client side!
+// Data store interface for various storages, interface on client side!
 type OrderDataStorage interface {
 	AddOrder(order model.Order)
 	GetAll() []model.Order

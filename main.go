@@ -1,11 +1,10 @@
 package main
 
 import (
-	"com.sikora/orders/service"
-	"log"
-
-	"com.sikora/orders/storage/sql"
 	"fmt"
+	"github.com/prezessikora/orders/service"
+	"github.com/prezessikora/orders/storage/sql"
+	"log"
 )
 import "github.com/gin-gonic/gin"
 

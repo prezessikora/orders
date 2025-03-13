@@ -1,4 +1,4 @@
-module com.sikora/orders
+module github.com/prezessikora/orders
 
 go 1.23.0
 
