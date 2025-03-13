@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/prezessikora/orders/service"
-	"github.com/prezessikora/orders/storage/sql"
-	"log"
+	"github.com/prezessikora/orders/storage/memory"
+	_ "github.com/prezessikora/orders/storage/sql"
+	_ "log"
 )
 import "github.com/gin-gonic/gin"
 
@@ -16,20 +17,20 @@ func main() {
 
 	server := gin.Default()
 
-	//ordersService := service.NewOrdersService(memory.NewDataStore())
+	ordersService := service.NewOrdersService(memory.NewDataStore())
 	// SQL
-	err, storage := sql.NewDataStore()
-	if err != nil {
-		log.Println(err)
-		log.Fatal("Error creating sql data store")
-		return
-	}
-	ordersService := service.NewOrdersService(storage)
+	//err, storage := sql.NewDataStore()
+	//if err != nil {
+	//	log.Println(err)
+	//	log.Fatal("Error creating sql data store")
+	//	return
+	//}
+	//ordersService := service.NewOrdersService(storage)
 	// SQL
 
 	ordersService.RegisterRoutes(server)
 
-	err = server.Run(":8081")
+	err := server.Run(":8081")
 	if err != nil {
 		fmt.Println(err)
 		return

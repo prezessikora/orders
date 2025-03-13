@@ -12,6 +12,8 @@ import (
 	"time"
 )
 
+// SQL model
+
 type Order struct {
 	gorm.Model
 	UserId  int
@@ -63,17 +65,20 @@ func NewDataStore() (error, *DataStorage) {
 	//fmt.Printf("query all: %d\n", len(orders))
 }
 
-func (s DataStorage) AddOrder(order model.Order) {
+func (s DataStorage) AddOrder(order model.Order) int {
 
-	result := s.db.Create(&Order{UserId: order.UserId, EventId: order.EventId, Status: order.Status,
-		Log: []Log{{Description: "order created"}, {Description: "payment requested"}}})
+	dbOrder := Order{UserId: order.UserId, EventId: order.EventId, Status: order.Status,
+		Log: []Log{{Description: "order created"}, {Description: "payment requested"}}}
+	result := s.db.Create(&dbOrder)
 
 	if err := result.Error; err != nil {
-		fmt.Println(result.Error)
-		return
+		log.Println(result.Error)
+		// TODO return error here
+		return 0
 	}
-	pki := 100
-	log.Printf("Added order with id: %d\n", pki)
+
+	log.Printf("added order with id: %d", dbOrder.ID)
+	return int(dbOrder.ID)
 }
 
 func (s DataStorage) GetAll() []model.Order {

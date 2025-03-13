@@ -17,10 +17,11 @@ type MemoryOrdersStorage struct {
 	nextId int
 }
 
-func (storage *MemoryOrdersStorage) AddOrder(order model.Order) {
+func (storage *MemoryOrdersStorage) AddOrder(order model.Order) int {
 	storage.nextId += 1
 	order.Id = storage.nextId
 	storage.orders = append(storage.orders, order)
+	return order.Id
 }
 
 func (storage MemoryOrdersStorage) GetAll() []model.Order {

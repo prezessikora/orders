@@ -19,25 +19,30 @@ func NewOrdersService(storage OrderDataStorage) *OrdersService {
 
 // Data store interface for various storages, interface on client side!
 type OrderDataStorage interface {
-	AddOrder(order model.Order)
+	AddOrder(order model.Order) int
 	GetAll() []model.Order
 	GetOrderById(id int) (model.Order, error)
 }
 
+type OrderRequest struct {
+	UserId  int `binding:"required" json:"user_id"`
+	EventId int `binding:"required" json:"event_id"`
+}
+
 // Initiate the registration createOrder for the given event and user
 func (service OrdersService) createOrder(ctx *gin.Context) {
-	var order model.Order
+	var orderRequest OrderRequest
 
-	err := ctx.ShouldBindBodyWithJSON(&order)
+	err := ctx.ShouldBindBodyWithJSON(&orderRequest)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": "could not order request data"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "could not parse orderRequest request data"})
 		fmt.Println(err)
 		return
 	}
-	order.Reset()
-	service.storage.AddOrder(order)
-	fmt.Println(order)
-	ctx.JSONP(http.StatusCreated, gin.H{"order": order})
+	order := model.NewOrder(orderRequest.EventId, orderRequest.UserId)
+	orderId := service.storage.AddOrder(order)
+
+	ctx.JSONP(http.StatusCreated, gin.H{"order_id": orderId})
 }
 
 // returns all paid model for which ticket can be created
