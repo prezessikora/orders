@@ -3,25 +3,20 @@ package service
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/prezessikora/events/client"
 	"github.com/prezessikora/orders/model"
+	"log"
 	"net/http"
 	"strconv"
 )
 
-// The service and its deps
+// OrdersService The service and its deps
 type OrdersService struct {
 	storage OrderDataStorage
 }
 
 func NewOrdersService(storage OrderDataStorage) *OrdersService {
 	return &OrdersService{storage: storage}
-}
-
-// Data store interface for various storages, interface on client side!
-type OrderDataStorage interface {
-	AddOrder(order model.Order) int
-	GetAll() []model.Order
-	GetOrderById(id int) (model.Order, error)
 }
 
 type OrderRequest struct {
@@ -39,6 +34,15 @@ func (service OrdersService) createOrder(ctx *gin.Context) {
 		fmt.Println(err)
 		return
 	}
+	// check with events service the order is valid
+	event, err := client.NewEvents().GetEvent(orderRequest.EventId)
+
+	if err != nil {
+		ctx.JSON(http.StatusUnprocessableEntity, gin.H{"message": "order event not verified"})
+		log.Print(err)
+		return
+	}
+	log.Print(event)
 	order := model.NewOrder(orderRequest.EventId, orderRequest.UserId)
 	orderId := service.storage.AddOrder(order)
 
@@ -46,9 +50,22 @@ func (service OrdersService) createOrder(ctx *gin.Context) {
 }
 
 // returns all paid model for which ticket can be created
-func (service OrdersService) getAllPaidOrders(context *gin.Context) {
-	all := service.storage.GetAll()
-	context.JSONP(http.StatusOK, gin.H{"orders": all})
+func (service OrdersService) getAllUserPaidOrdersHttp(ctx *gin.Context) {
+	idParam := ctx.Param("userId")
+	userId, err := strconv.Atoi(idParam)
+	if err != nil {
+		fmt.Println(err)
+		ctx.JSON(http.StatusBadRequest, gin.H{"message": "could not convert request param"})
+		return
+	}
+
+	all := service.getAllPaidOrders(userId)
+	ctx.JSONP(http.StatusOK, gin.H{"orders": all})
+}
+
+// Inter service interface so that they dont have to go through HTTP
+func (service OrdersService) getAllPaidOrders(userId int) []model.Order {
+	return service.storage.GetUserOrders(userId)
 }
 
 // check order status for user dashboard
@@ -72,6 +89,6 @@ func (service OrdersService) orderStatus(ctx *gin.Context) {
 
 func (service OrdersService) RegisterRoutes(server *gin.Engine) {
 	server.POST("/orders", service.createOrder)
-	server.GET("/orders/", service.getAllPaidOrders)
+	server.GET("/orders/user/:userId", service.getAllUserPaidOrdersHttp)
 	server.GET("/orders/:id", service.orderStatus)
 }

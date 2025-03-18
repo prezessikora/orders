@@ -33,6 +33,28 @@ type DataStorage struct {
 	db *gorm.DB
 }
 
+func (s DataStorage) GetUserOrders(userId int) []model.Order {
+	var dbOrders []Order
+	result := s.db.Where(&Order{UserId: userId}).Find(&dbOrders)
+
+	if result.Error != nil {
+		log.Println(result.Error)
+		return make([]model.Order, 0)
+	}
+	// map sql data store objects to the model
+	orders := make([]model.Order, 0, len(dbOrders))
+	for _, row := range dbOrders {
+		orders = append(orders, model.Order{
+			Id:      int(row.ID),
+			UserId:  row.UserId,
+			EventId: row.EventId,
+			Created: row.CreatedAt,
+			Status:  row.Status,
+		})
+	}
+	return orders
+}
+
 func NewDataStore() (error, *DataStorage) {
 
 	newLogger := logger.New(
@@ -106,7 +128,7 @@ func (s DataStorage) GetAll() []model.Order {
 
 func (s DataStorage) GetOrderById(id int) (model.Order, error) {
 	var order Order
-	result := s.db.First(&order, 1)
+	result := s.db.First(&order, id)
 	if result.Error != nil {
 		return model.Order{}, result.Error
 	}

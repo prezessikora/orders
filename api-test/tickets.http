@@ -1,0 +1,4 @@
+### Get all printable user tickets
+GET http://localhost:8081/tickets/7
+
+### Get

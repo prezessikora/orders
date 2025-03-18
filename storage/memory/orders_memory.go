@@ -17,6 +17,16 @@ type MemoryOrdersStorage struct {
 	nextId int
 }
 
+func (storage *MemoryOrdersStorage) GetUserOrders(userId int) []model.Order {
+	var result []model.Order
+	for _, storedOrder := range storage.orders {
+		if storedOrder.UserId == userId {
+			result = append(result, storedOrder)
+		}
+	}
+	return result
+}
+
 func (storage *MemoryOrdersStorage) AddOrder(order model.Order) int {
 	storage.nextId += 1
 	order.Id = storage.nextId
