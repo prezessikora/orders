@@ -10,6 +10,7 @@ type OrderDataStorage interface {
 	GetAll() []model.Order
 	GetUserOrders(userId int) []model.Order
 	GetOrderById(id int) (model.Order, error)
+	CancelEventOrders(eventId int) error
 }
 
 // TicketsDataStorage OrderDataStorage is tickets data store interface for various storages in-mem or sql.

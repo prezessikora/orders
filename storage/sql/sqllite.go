@@ -33,6 +33,45 @@ type DataStorage struct {
 	db *gorm.DB
 }
 
+func (s DataStorage) logOrderEvent(description string, orderId int) error {
+	l := Log{OrderID: uint(orderId), Description: description}
+	result := s.db.Create(&l)
+	if result.Error != nil {
+		log.Printf("error creating order log event: %v", result.Error)
+		return result.Error
+	}
+	return nil
+
+}
+
+// CancelEventOrders changes the state of all orders given eventId that was deleted in events service
+// Relevant Log entries for all cancelled events are also created
+func (s DataStorage) CancelEventOrders(eventId int) error {
+	var changedOrders []Order
+	result := s.db.Where(&Order{EventId: eventId}).Find(&changedOrders)
+
+	if err := result.Error; err != nil {
+		log.Printf("error querying orders to be cancelled: %v\n", err)
+		return err
+	}
+
+	result = s.db.Model(&Order{}).Where(&Order{EventId: eventId}).Update("status", "cancelled")
+
+	if err := result.Error; err != nil {
+		log.Printf("error cancelling orders: %v\n", err)
+		return err
+	}
+	log.Printf("cancelled %v events", result.RowsAffected)
+	for _, o := range changedOrders {
+		log.Printf("creating order cancel log for order_id: %v", o.ID)
+		err := s.logOrderEvent("cancelled", int(o.ID))
+		if err != nil {
+			log.Printf("error creating order change log: %v", err)
+		}
+	}
+	return nil
+}
+
 func (s DataStorage) GetUserOrders(userId int) []model.Order {
 	var dbOrders []Order
 	result := s.db.Where(&Order{UserId: userId}).Find(&dbOrders)

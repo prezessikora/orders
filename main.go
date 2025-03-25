@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/prezessikora/orders/notifications"
 	"github.com/prezessikora/orders/service"
 	"github.com/prezessikora/orders/storage/memory"
 	"github.com/prezessikora/orders/storage/sql"
@@ -43,6 +45,11 @@ func main() {
 	ordersService.RegisterRoutes(server)
 	ticketsService := service.NewTicketsService(memoryTicketsStoreService(), ordersService)
 	ticketsService.RegisterRoutes(server)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	notifications.HandleEventsDeletions(ctx, storage)
 
 	err := server.Run(":8081")
 	if err != nil {
