@@ -40,12 +40,15 @@ func main() {
 
 	storage := createDataStore()
 
+	// gin HTTP routes
 	server := gin.Default()
 	ordersService := service.NewOrdersService(storage)
 	ordersService.RegisterRoutes(server)
+	// tickets
 	ticketsService := service.NewTicketsService(memoryTicketsStoreService(), ordersService)
 	ticketsService.RegisterRoutes(server)
 
+	// async message broker notifications
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

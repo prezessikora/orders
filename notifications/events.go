@@ -8,6 +8,7 @@ import (
 	"strconv"
 )
 
+// HandleEventsDeletions starts a goroutine that processes events service deletions
 func HandleEventsDeletions(ctx context.Context, storage service.OrderDataStorage) {
 	go func() {
 		err := Subscribe("events.event-deletions", updateOrders, ctx, storage)
@@ -25,7 +26,5 @@ func updateOrders(bytes []byte, storage service.OrderDataStorage) {
 	err := storage.CancelEventOrders(eventId)
 	if err != nil {
 		fmt.Printf("error cancelling orders: %v\n", err)
-		return
 	}
-
 }

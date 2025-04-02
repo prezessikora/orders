@@ -1,16 +1,13 @@
-### GET request to example server
+### Create order
 POST http://localhost:8081/orders
 
 {
 	"user_id" : 1,
-	"event_id" : 5
+	"event_id" : 1
 }
 
-###
+### Order with id
 GET http://localhost:8081/orders/2
 
-###
-GET http://localhost:8081/orders/
-
-###
-GET http://localhost:8081/orders/user/7
+### User orders
+GET http://localhost:8081/orders/user/1

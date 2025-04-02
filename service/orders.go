@@ -26,6 +26,15 @@ type OrderRequest struct {
 
 // Initiate the registration createOrder for the given event and user
 func (service OrdersService) createOrder(ctx *gin.Context) {
+	s, ok := ctx.Get(XEventsHeaderKey)
+	var coorelationId string
+	if ok {
+		s2, _ := s.(string)
+		coorelationId = s2
+	}
+
+	log.Printf("[INFO] [Orders] [%v] create order", coorelationId)
+
 	var orderRequest OrderRequest
 
 	err := ctx.ShouldBindBodyWithJSON(&orderRequest)
@@ -63,7 +72,7 @@ func (service OrdersService) getAllUserPaidOrdersHttp(ctx *gin.Context) {
 	ctx.JSONP(http.StatusOK, gin.H{"orders": all})
 }
 
-// Inter service interface so that they dont have to go through HTTP
+// Inter service interface for tickets so that they dont have to go through HTTP
 func (service OrdersService) getAllPaidOrders(userId int) []model.Order {
 	return service.storage.GetUserOrders(userId)
 }
@@ -88,7 +97,33 @@ func (service OrdersService) orderStatus(ctx *gin.Context) {
 }
 
 func (service OrdersService) RegisterRoutes(server *gin.Engine) {
-	server.POST("/orders", service.createOrder)
-	server.GET("/orders/user/:userId", service.getAllUserPaidOrdersHttp)
-	server.GET("/orders/:id", service.orderStatus)
+
+	correlated := server.Group("/")
+	// per group middleware! in this case we use the custom created
+	// AuthRequired() middleware just in the "authorized" group.
+	correlated.Use(correlationId)
+
+	correlated.POST("/orders", service.createOrder)
+	correlated.GET("/orders/user/:userId", service.getAllUserPaidOrdersHttp)
+	correlated.GET("/orders/:id", service.orderStatus)
+
+}
+
+const XEventsHeaderKey = "X-Events-Request-Id"
+
+func correlationId(c *gin.Context) {
+
+	// this header is used as coorelation id for requests
+
+	header := c.GetHeader(XEventsHeaderKey)
+	if header == "" {
+		id := "XXX-100"
+		// further to be set as HTTP header for in between services calls
+		c.Set(XEventsHeaderKey, id)
+		log.Printf("setting coorelation id [%v] : %v", XEventsHeaderKey, id)
+	}
+	// before request
+	c.Next()
+	// after request
+
 }

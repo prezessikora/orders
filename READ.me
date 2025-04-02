@@ -1,1 +1,8 @@
-This is a downstream service for Events_Manager that is responsible for orders management. It also takes care of payments. 
+This is a downstream service for Events_Manager that is responsible for orders management. It also takes care of payments.
+
+
+To run the image build and run with following commands but docker-compose setup is preferable:
+
+docker build -t orders-service .
+
+docker run -p 8081:8081 orders-service
