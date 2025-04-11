@@ -3,7 +3,7 @@ package sql
 import (
 	"errors"
 	"fmt"
-	"github.com/prezessikora/orders/model"
+	"github.com/prezessikora/orders/model/order"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -72,18 +72,18 @@ func (s DataStorage) CancelEventOrders(eventId int) error {
 	return nil
 }
 
-func (s DataStorage) GetUserOrders(userId int) []model.Order {
+func (s DataStorage) GetUserOrders(userId int) []order.Order {
 	var dbOrders []Order
 	result := s.db.Where(&Order{UserId: userId}).Find(&dbOrders)
 
 	if result.Error != nil {
 		log.Println(result.Error)
-		return make([]model.Order, 0)
+		return make([]order.Order, 0)
 	}
 	// map sql data store objects to the model
-	orders := make([]model.Order, 0, len(dbOrders))
+	orders := make([]order.Order, 0, len(dbOrders))
 	for _, row := range dbOrders {
-		orders = append(orders, model.Order{
+		orders = append(orders, order.Order{
 			Id:      int(row.ID),
 			UserId:  row.UserId,
 			EventId: row.EventId,
@@ -126,7 +126,7 @@ func NewDataStore() (error, *DataStorage) {
 	//fmt.Printf("query all: %d\n", len(orders))
 }
 
-func (s DataStorage) AddOrder(order model.Order) int {
+func (s DataStorage) AddOrder(order order.Order) int {
 
 	dbOrder := Order{UserId: order.UserId, EventId: order.EventId, Status: order.Status,
 		Log: []Log{{Description: "order created"}, {Description: "payment requested"}}}
@@ -142,19 +142,19 @@ func (s DataStorage) AddOrder(order model.Order) int {
 	return int(dbOrder.ID)
 }
 
-func (s DataStorage) GetAll() []model.Order {
+func (s DataStorage) GetAll() []order.Order {
 	var dbOrders []Order
 	result := s.db.Preload("Log").Find(&dbOrders)
 	if result.Error != nil {
 		log.Println(result.Error)
-		return make([]model.Order, 0)
+		return make([]order.Order, 0)
 	}
 	// map sql data store objects to the model
-	orders := make([]model.Order, 0, len(dbOrders))
+	orders := make([]order.Order, 0, len(dbOrders))
 	for _, row := range dbOrders {
 		latestStatus := row.Log[len(row.Log)-1]
 
-		orders = append(orders, model.Order{
+		orders = append(orders, order.Order{
 			Id:      int(row.ID),
 			UserId:  row.UserId,
 			EventId: row.EventId,
@@ -165,19 +165,19 @@ func (s DataStorage) GetAll() []model.Order {
 	return orders
 }
 
-func (s DataStorage) GetOrderById(id int) (model.Order, error) {
-	var order Order
-	result := s.db.First(&order, id)
+func (s DataStorage) GetOrderById(id int) (order.Order, error) {
+	var orderById Order
+	result := s.db.First(&orderById, id)
 	if result.Error != nil {
-		return model.Order{}, result.Error
+		return order.Order{}, result.Error
 	}
 	if result.RowsAffected == 0 {
-		return model.Order{}, errors.New("could not find order")
+		return order.Order{}, errors.New("could not find order")
 	}
 
-	log.Printf("GetOrderById: %v\n", order)
-	log.Println(order.Log)
-	ro := model.Order{Id: int(order.ID), UserId: order.UserId, EventId: order.EventId, Created: order.CreatedAt, Status: order.Status}
+	log.Printf("GetOrderById: %v\n", orderById)
+	log.Println(orderById.Log)
+	ro := order.Order{Id: int(orderById.ID), UserId: orderById.UserId, EventId: orderById.EventId, Created: orderById.CreatedAt, Status: orderById.Status}
 	return ro, nil
 
 }

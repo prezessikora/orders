@@ -30,7 +30,8 @@ func sqlStorageService() service.OrderDataStorage {
 	log.Println("Using sql.NewDataStore")
 	err, storage := sql.NewDataStore()
 	if err != nil {
-		log.Fatal("error creating sql data store %v", err)
+		panic("error creating sql data store")
+
 		return nil
 	}
 	return storage
