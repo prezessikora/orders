@@ -3,10 +3,10 @@ package service
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/prezessikora/orders/common"
 	"github.com/prezessikora/orders/model/order"
 	"github.com/prezessikora/orders/myclient"
+	"log/slog"
 
 	"log"
 	"net/http"
@@ -26,6 +26,20 @@ type OrdersService struct {
 	domainEventPublisher EventPublisher
 }
 
+type LogLevel int
+
+// Logger is facade for slog with extra features to enhance the log output with request id and alike
+type Logger struct {
+}
+
+func (logger Logger) Info(message string) {
+	slog.Info(message)
+}
+
+func (logger Logger) Warn(message string) {
+	slog.Warn(message)
+}
+
 func NewOrdersService(storage OrderDataStorage) *OrdersService {
 	return &OrdersService{storage: storage, domainEventPublisher: EventPublisher{}}
 }
@@ -37,21 +51,19 @@ type OrderRequest struct {
 
 // Initiate the registration createOrder for the given event and user
 func (service OrdersService) createOrder(ctx *gin.Context) {
-	requestId, ok := ctx.Get(common.XEventsHeaderKey)
+
 	// TODO move this into logger as struct on the service since the UUID is only needed there at the moment
-	var correlationId string
-	if ok {
-		s2, _ := requestId.(uuid.UUID)
-		correlationId = s2.String()
-	} else {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"message": "common misconfigured, missing UUID"})
+
+	correlationId, err := common.GetRequestUUIDFromContext(ctx)
+	if err != nil {
+		sendResponse(ctx, http.StatusInternalServerError, "request id missing in service layer", err)
 		return
 	}
-	//
 	log.Printf("[INFO] [Orders] [%v] create newOrder", correlationId)
 
+	// parse the request
 	var orderRequest OrderRequest
-	err := ctx.ShouldBindBodyWithJSON(&orderRequest)
+	err = ctx.ShouldBindBodyWithJSON(&orderRequest)
 	if err != nil {
 		sendResponse(ctx, http.StatusBadRequest, "incorrect request", err)
 		return
@@ -64,18 +76,19 @@ func (service OrdersService) createOrder(ctx *gin.Context) {
 		return
 	}
 
+	// MODEL interaction
 	// check with events service the newOrder is valid & there are enough places
 	newOrder, err := order.Create(orderRequest.EventId, orderRequest.UserId, event)
 	if err != nil {
 		sendResponse(ctx, http.StatusBadRequest, "could not create newOrder", err)
 		return
 	}
-	// persist the newOrder
+	// persist the newOrder get obtain it's id
 	orderId := service.storage.AddOrder(newOrder)
 
 	newOrder.Id = orderId
 	service.domainEventPublisher.notifyOrderCreated(newOrder)
-	// return created newOrder to client
+	// return created newOrder to the client
 	ctx.JSON(http.StatusCreated, gin.H{"newOrder": newOrder})
 }
 

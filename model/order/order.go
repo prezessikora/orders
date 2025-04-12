@@ -51,6 +51,7 @@ func (b BookingWindowPolicy) isAllowed(event myclient.Event) error {
 
 // canCreateOrderForEvent checks if an order can be created for the given event based on its capacity and start time.
 func canCreateOrderForEvent(event *myclient.Event) error {
+
 	if !(event.Capacity > event.Bookings) {
 		return errors.New("event has no capacity")
 	}
